@@ -12,7 +12,7 @@ spring:
     property-naming-strategy: SNAKE_CASE
     default-property-inclusion: non_null
 registry_service:
-  url: https://demo4460370.mockable.io/registry/
+  url: https://pilot-gateway-1.beckn.nsdl.co.in/
   retry:
     max_attempts: 3
     initial_interval_in_millis: 1000
@@ -24,7 +24,7 @@ registry_service:
     read_in_seconds: 10
     write_in_seconds: 10
 bpp_registry_service:
-  url: https://demo4460370.mockable.io/bpp_registry/
+  url: https://pilot-gateway-1.beckn.nsdl.co.in/
 gateway_service:
   retry:
     max_attempts: 3
@@ -44,7 +44,7 @@ bpp_service:
     read_in_seconds: 10
     write_in_seconds: 10
 protocol_service:
-  url: http://localhost:9002/
+  url: http://${PROTOCOL_HOST:locahost}:9002/
   retry:
     max_attempts: 3
     initial_interval_in_millis: 1000
@@ -58,7 +58,7 @@ context:
   city: std:080
   country: IND
   bap_id: box.beckn.org
-  bap_uri: http://localhost:9002/protocol/v1
+  bap_uri: http://${PROTOCOL_HOST:locahost}:9002/protocol/v1
   ttl_seconds: 20
 beckn:
   security.enabled: false
@@ -72,8 +72,7 @@ security:
     enable-logout-everywhere: false
     session-expiry-in-days: 5
   allow-credentials: true
-  allowed-origins:
-    - http://localhost:9001
+  allowed-origins: "*"
   allowed-methods:
     - GET
     - POST
@@ -122,8 +121,9 @@ security:
     - /client/v2/get_support
 database:
   mongo:
-    url: mongodb://localhost:27017
+    url: mongodb://mongo:27017
     name: sandbox_client
+
 management:
   endpoints:
     web:

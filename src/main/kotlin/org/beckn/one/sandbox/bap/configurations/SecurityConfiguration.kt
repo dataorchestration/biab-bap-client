@@ -28,56 +28,55 @@ import javax.servlet.http.HttpServletResponse
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true, jsr250Enabled = true, prePostEnabled = true)
 class SecurityConfiguration : WebSecurityConfigurerAdapter() {
-    @Autowired
-    var objectMapper: ObjectMapper? = null
+  @Autowired
+  var objectMapper: ObjectMapper? = null
 
-    @Autowired
-    var restSecProps: SecurityProperties? = null
+  @Autowired
+  var restSecProps: SecurityProperties? = null
 
 
+  @Autowired
+  var tokenAuthenticationFilter: JwtRequestFilter? = null
 
-    @Autowired
-    var tokenAuthenticationFilter: JwtRequestFilter? = null
-    @Bean
-    fun restAuthenticationEntryPoint(): AuthenticationEntryPoint {
-        return AuthenticationEntryPoint {
-            httpServletRequest: HttpServletRequest?,
-            httpServletResponse: HttpServletResponse,
-            e: AuthenticationException? ->
-            val errorObject: MutableMap<String, Any> = HashMap()
-            val errorCode = 401
-            errorObject["message"] = "Unauthorized access of protected resource, invalid credentials"
-            errorObject["error"] = HttpStatus.UNAUTHORIZED
-            errorObject["code"] = errorCode
-            errorObject["timestamp"] = Timestamp(Date().time)
-            httpServletResponse.contentType = "application/json;charset=UTF-8"
-            httpServletResponse.status = errorCode
-            httpServletResponse.writer.write(objectMapper!!.writeValueAsString(errorObject))
-        }
+  @Bean
+  fun restAuthenticationEntryPoint(): AuthenticationEntryPoint {
+    return AuthenticationEntryPoint { httpServletRequest: HttpServletRequest?,
+                                      httpServletResponse: HttpServletResponse,
+                                      e: AuthenticationException? ->
+      val errorObject: MutableMap<String, Any> = HashMap()
+      val errorCode = 401
+      errorObject["message"] = "Unauthorized access of protected resource, invalid credentials"
+      errorObject["error"] = HttpStatus.UNAUTHORIZED
+      errorObject["code"] = errorCode
+      errorObject["timestamp"] = Timestamp(Date().time)
+      httpServletResponse.contentType = "application/json;charset=UTF-8"
+      httpServletResponse.status = errorCode
+      httpServletResponse.writer.write(objectMapper!!.writeValueAsString(errorObject))
     }
+  }
 
-    @Bean
-    fun corsConfigurationSource(): CorsConfigurationSource {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = restSecProps!!.allowedOrigins
-        configuration.allowedMethods = restSecProps!!.allowedMethods
-        configuration.allowedHeaders = restSecProps!!.allowedHeaders
-        configuration.allowCredentials = restSecProps!!.allowCredentials
-        configuration.exposedHeaders = restSecProps!!.exposedHeaders
-        val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", configuration)
-        return source
-    }
+  @Bean
+  fun corsConfigurationSource(): CorsConfigurationSource {
+    val configuration = CorsConfiguration()
+    configuration.allowedOriginPatterns = restSecProps!!.allowedOrigins
+    configuration.allowedMethods = restSecProps!!.allowedMethods
+    configuration.allowedHeaders = restSecProps!!.allowedHeaders
+    configuration.allowCredentials = restSecProps!!.allowCredentials
+    configuration.exposedHeaders = restSecProps!!.exposedHeaders
+    val source = UrlBasedCorsConfigurationSource()
+    source.registerCorsConfiguration("/**", configuration)
+    return source
+  }
 
-    @Throws(Exception::class)
-    override fun configure(http: HttpSecurity) {
-        http.cors().configurationSource(corsConfigurationSource()).and().csrf().disable().formLogin().disable()
-            .httpBasic().disable().exceptionHandling().authenticationEntryPoint(restAuthenticationEntryPoint())
-            .and().authorizeRequests()
-            .antMatchers("/client/v1/").permitAll()
-            .antMatchers(*restSecProps?.protectedActions!!.toTypedArray()).authenticated()
-            .and()
-            .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-    }
+  @Throws(Exception::class)
+  override fun configure(http: HttpSecurity) {
+    http.cors().configurationSource(corsConfigurationSource()).and().csrf().disable().formLogin().disable()
+      .httpBasic().disable().exceptionHandling().authenticationEntryPoint(restAuthenticationEntryPoint())
+      .and().authorizeRequests()
+      .antMatchers("/client/v1/").permitAll()
+      .antMatchers(*restSecProps?.protectedActions!!.toTypedArray()).authenticated()
+      .and()
+      .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+  }
 }
