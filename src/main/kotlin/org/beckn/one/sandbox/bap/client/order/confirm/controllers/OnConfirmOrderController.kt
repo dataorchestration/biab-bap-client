@@ -50,50 +50,50 @@ class OnConfirmOrderController @Autowired constructor(
       if (messageIds.isNotEmpty() && messageIds.trim().isNotEmpty()) {
         val messageIdArray = messageIds.split(",")
         var okResponseConfirmOrder: MutableList<ClientConfirmResponse> = ArrayList()
-          for (messageId in messageIdArray) {
-            val bapResult = onPoll(messageId, protocolClient.getConfirmResponsesCall(messageId))
-            when (bapResult.statusCode.value()) {
-              200 -> {
-                val resultResponse: ClientConfirmResponse = bapResult.body as ClientConfirmResponse
-                if (resultResponse.message?.order != null) {
-                  val orderDao: OrderDao = mapping.protocolToEntity(resultResponse.message.order!!)
-                  orderDao.transactionId = resultResponse.context?.transactionId
-                  orderDao.userId = user.uid
-                  orderDao.messageId = resultResponse.context?.messageId
-                  onConfirmOrderService.updateOrder(orderDao).fold(
-                    {
-                      okResponseConfirmOrder.add(
-                        ClientConfirmResponse(
-                          error = it.error(),
-                          context = contextFactory.create(messageId = messageId)
-                        )
+        for (messageId in messageIdArray) {
+          val bapResult = onPoll(messageId, protocolClient.getConfirmResponsesCall(messageId))
+          when (bapResult.statusCode.value()) {
+            200 -> {
+              val resultResponse: ClientConfirmResponse = bapResult.body as ClientConfirmResponse
+              if (resultResponse.message?.order != null) {
+                val orderDao: OrderDao = mapping.protocolToEntity(resultResponse.message.order!!)
+                orderDao.transactionId = resultResponse.context?.transactionId
+                orderDao.userId = user.uid
+                orderDao.messageId = resultResponse.context?.messageId
+                onConfirmOrderService.updateOrder(orderDao).fold(
+                  {
+                    okResponseConfirmOrder.add(
+                      ClientConfirmResponse(
+                        error = it.error(),
+                        context = contextFactory.create(messageId = messageId)
                       )
-                    }, {
-                      okResponseConfirmOrder.add(resultResponse)
-                    }
-                  )
-                } else {
-                  okResponseConfirmOrder.add(
-                    ClientConfirmResponse(
-                      error = DatabaseError.NoDataFound.noDataFoundError,
-                      context = contextFactory.create(messageId = messageId)
                     )
-                  )
-                }
-              }
-              else -> {
+                  }, {
+                    okResponseConfirmOrder.add(resultResponse)
+                  }
+                )
+              } else {
                 okResponseConfirmOrder.add(
                   ClientConfirmResponse(
-                    error = bapResult.body?.error,
+                    error = DatabaseError.NoDataFound.noDataFoundError,
                     context = contextFactory.create(messageId = messageId)
                   )
                 )
               }
             }
+            else -> {
+              okResponseConfirmOrder.add(
+                ClientConfirmResponse(
+                  error = bapResult.body?.error,
+                  context = contextFactory.create(messageId = messageId)
+                )
+              )
+            }
           }
-          log.info("`Initiated and returning onConfirm acknowledgment`. Message: {}", okResponseConfirmOrder)
+        }
+        log.info("`Initiated and returning onConfirm acknowledgment`. Message: {}", okResponseConfirmOrder)
 
-          return ResponseEntity.ok(okResponseConfirmOrder)
+        return ResponseEntity.ok(okResponseConfirmOrder)
       } else {
         return mapToErrorResponse(BppError.BadRequestError)
       }

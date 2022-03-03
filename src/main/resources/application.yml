@@ -44,7 +44,7 @@ bpp_service:
     read_in_seconds: 10
     write_in_seconds: 10
 protocol_service:
-  url: http://${PROTOCOL_HOST:locahost}:9002/
+  url: http://${PROTOCOL_HOST:locahost}/
   retry:
     max_attempts: 3
     initial_interval_in_millis: 1000
@@ -58,7 +58,7 @@ context:
   city: std:080
   country: IND
   bap_id: box.beckn.org
-  bap_uri: http://${PROTOCOL_HOST:locahost}:9002/protocol/v1
+  bap_uri: http://${PROTOCOL_HOST:locahost}/protocol/v1
   ttl_seconds: 20
 beckn:
   security.enabled: false
@@ -72,7 +72,8 @@ security:
     enable-logout-everywhere: false
     session-expiry-in-days: 5
   allow-credentials: true
-  allowed-origins: "*"
+  allowed-origins:
+    - "*"
   allowed-methods:
     - GET
     - POST
