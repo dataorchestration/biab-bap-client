@@ -1,2 +1,3 @@
 **
 !/build/libs/sandbox_bap_client-*.*.*-SNAPSHOT.jar
+!/build/resources/main/application.yml
