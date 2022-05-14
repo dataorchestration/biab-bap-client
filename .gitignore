@@ -36,3 +36,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+####security
+firebase_config.json
